@@ -4,6 +4,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Team Tracker</title>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
   <style>
     :root {
       --bg: #0D0D0D;
@@ -529,14 +531,27 @@
 <div class="toast" id="toast"></div>
 
 <script>
+// ── Firebase ──────────────────────────────────────────────────────────────────
+const firebaseConfig = {
+  apiKey: "AIzaSyBGn-P6pTj0BtG3pLnPDKMAZ2nogCJfWJA",
+  authDomain: "reeka-team-tracker.firebaseapp.com",
+  databaseURL: "https://reeka-team-tracker-default-rtdb.firebaseio.com",
+  projectId: "reeka-team-tracker",
+  storageBucket: "reeka-team-tracker.firebasestorage.app",
+  messagingSenderId: "154377262479",
+  appId: "1:154377262479:web:80c93064fea82de1d7e7fa"
+};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+const STATE_REF = db.ref('teamTracker');
+
 // ── Config ────────────────────────────────────────────────────────────────────
 const MEMBERS   = ['Feyi', 'Rebecca', 'Daniel', 'Francis'];
 const PRIORITIES= ['High', 'Medium', 'Low'];
 const STATUSES  = ['Open', 'Blocked', 'Done'];
-const STORE_KEY = 'teamTracker_v1';
 
 // ── State ─────────────────────────────────────────────────────────────────────
-let state = loadState();
+let state = defaultState();
 let me = sessionStorage.getItem('tt_user') || '';
 
 // ── Persistence ───────────────────────────────────────────────────────────────
@@ -556,16 +571,8 @@ function emptyTasks() {
   return Object.fromEntries(MEMBERS.map(m => [m, []]));
 }
 
-function loadState() {
-  try {
-    const raw = localStorage.getItem(STORE_KEY);
-    if (raw) return JSON.parse(raw);
-  } catch {}
-  return defaultState();
-}
-
 function save() {
-  localStorage.setItem(STORE_KEY, JSON.stringify(state));
+  STATE_REF.set(state);
 }
 
 // ── Utilities ─────────────────────────────────────────────────────────────────
@@ -979,7 +986,16 @@ function render() {
     }
   });
 
-  render();
+  STATE_REF.on('value', snapshot => {
+    const data = snapshot.val();
+    if (data) {
+      state = data;
+    } else {
+      state = defaultState();
+      STATE_REF.set(state);
+    }
+    render();
+  });
 })();
 </script>
 </body>
