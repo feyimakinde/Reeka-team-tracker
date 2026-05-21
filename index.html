@@ -1,0 +1,986 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Team Tracker</title>
+  <style>
+    :root {
+      --bg: #0D0D0D;
+      --surface: #161616;
+      --surface2: #1F1F1F;
+      --surface3: #272727;
+      --border: #242424;
+      --border2: #333333;
+      --accent: #E36B37;
+      --accent-dim: rgba(227,107,55,0.12);
+      --accent-hover: #F07A44;
+      --text: #E8E8E8;
+      --text-muted: #888888;
+      --text-dim: #484848;
+      --green: #4CAF50;
+      --green-dim: rgba(76,175,80,0.10);
+      --green-border: rgba(76,175,80,0.35);
+      --red: #E05050;
+      --red-dim: rgba(224,80,80,0.10);
+      --red-border: rgba(224,80,80,0.35);
+      --yellow: #F5A623;
+      --r: 7px;
+      --r-sm: 4px;
+      --r-lg: 12px;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      font-size: 14px;
+      line-height: 1.5;
+      min-height: 100vh;
+    }
+
+    /* ── Header ── */
+    .hdr {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 0 24px;
+      height: 54px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    .hdr-brand { display: flex; align-items: center; gap: 10px; }
+    .hdr-logo {
+      width: 28px; height: 28px;
+      background: var(--accent);
+      border-radius: 6px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 13px; font-weight: 800; color: white; letter-spacing: -0.5px;
+    }
+    .hdr-title { font-size: 15px; font-weight: 600; }
+    .hdr-right { display: flex; align-items: center; gap: 14px; }
+
+    /* ── Nav ── */
+    .nav { display: flex; gap: 2px; }
+    .nav-btn {
+      padding: 5px 13px;
+      border-radius: var(--r-sm);
+      cursor: pointer;
+      font-size: 13px;
+      color: var(--text-muted);
+      background: none;
+      border: none;
+      font-family: inherit;
+      transition: all 0.12s;
+    }
+    .nav-btn:hover { color: var(--text); background: var(--surface2); }
+    .nav-btn.active { color: var(--accent); background: var(--accent-dim); }
+
+    /* ── Identity ── */
+    .id-wrap { display: flex; align-items: center; gap: 8px; }
+    .id-label { font-size: 12px; color: var(--text-muted); }
+    select {
+      background: var(--surface2);
+      border: 1px solid var(--border2);
+      color: var(--text);
+      padding: 5px 10px;
+      border-radius: var(--r-sm);
+      font-size: 13px;
+      cursor: pointer;
+      outline: none;
+      font-family: inherit;
+      transition: border-color 0.12s;
+    }
+    select:focus { border-color: var(--accent); }
+
+    /* ── Layout ── */
+    .main { max-width: 1440px; margin: 0 auto; padding: 24px; }
+
+    .sec-hdr {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      margin-bottom: 18px;
+    }
+    .sec-title { font-size: 17px; font-weight: 600; }
+    .sec-sub { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+
+    /* ── Perf Panel ── */
+    .perf-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+    .perf-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--r);
+      padding: 14px 16px;
+      transition: border-color 0.2s, background 0.2s;
+    }
+    .perf-card.all-done {
+      border-color: var(--green-border);
+      background: var(--green-dim);
+    }
+    .perf-card.has-blocked {
+      border-color: var(--red-border);
+      background: var(--red-dim);
+    }
+    .perf-name {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      margin-bottom: 6px;
+    }
+    .perf-stat { font-size: 22px; font-weight: 700; letter-spacing: -0.5px; }
+    .perf-card.all-done .perf-stat { color: var(--green); }
+    .perf-card.has-blocked .perf-stat { color: var(--red); }
+    .perf-sub { font-size: 11px; color: var(--text-dim); margin-top: 2px; }
+    .perf-dots { display: flex; gap: 4px; flex-wrap: wrap; margin-top: 8px; }
+    .dot {
+      width: 7px; height: 7px; border-radius: 50%;
+      background: var(--surface3);
+    }
+    .dot.done { background: var(--green); }
+    .dot.blocked { background: var(--red); }
+    .dot.open { background: var(--text-dim); }
+
+    /* ── Task Board ── */
+    .board {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 14px;
+    }
+    .col {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--r-lg);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+    .col.is-me { border-color: rgba(227,107,55,0.35); }
+    .col-hdr {
+      padding: 12px 14px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .col-name { font-size: 13px; font-weight: 600; }
+    .col-meta { display: flex; align-items: center; gap: 6px; }
+    .you-pill {
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: 0.8px;
+      color: var(--accent);
+      text-transform: uppercase;
+    }
+    .count-pill {
+      font-size: 11px;
+      padding: 1px 7px;
+      border-radius: 99px;
+      background: var(--surface3);
+      color: var(--text-muted);
+    }
+    .col-tasks {
+      flex: 1;
+      padding: 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 7px;
+      min-height: 180px;
+    }
+    .col-empty {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      color: var(--text-dim);
+      padding: 20px;
+      text-align: center;
+    }
+
+    /* ── Task Card ── */
+    .task-card {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: var(--r);
+      padding: 11px 12px;
+      transition: border-color 0.12s;
+    }
+    .task-card:hover { border-color: var(--border2); }
+    .task-card.blocked { border-left: 3px solid var(--red); padding-left: 10px; }
+    .task-card.done { opacity: 0.6; }
+    .task-card.done .task-name { text-decoration: line-through; color: var(--text-muted); }
+
+    .task-top { display: flex; align-items: flex-start; gap: 8px; margin-bottom: 7px; }
+    .task-name { font-size: 13px; font-weight: 500; flex: 1; line-height: 1.35; }
+    .task-badges { display: flex; align-items: center; gap: 5px; flex-wrap: wrap; }
+    .badge {
+      font-size: 10px;
+      font-weight: 500;
+      padding: 2px 6px;
+      border-radius: 3px;
+    }
+    .b-high   { background: rgba(224,80,80,0.18);   color: #E05050; }
+    .b-medium { background: rgba(245,166,35,0.18);  color: #F5A623; }
+    .b-low    { background: rgba(76,175,80,0.18);   color: #4CAF50; }
+    .b-open   { background: rgba(100,100,100,0.18); color: #888; }
+    .b-blocked{ background: rgba(224,80,80,0.18);   color: #E05050; }
+    .b-done   { background: rgba(76,175,80,0.18);   color: #4CAF50; }
+
+    .task-due  { font-size: 11px; color: var(--text-dim); }
+    .task-note { font-size: 12px; color: var(--text-muted); font-style: italic; margin-top: 5px; line-height: 1.4; }
+    .task-btns { display: flex; gap: 4px; margin-top: 8px; }
+
+    /* ── Inline Edit Panel ── */
+    .edit-panel {
+      display: none;
+      flex-direction: column;
+      gap: 6px;
+      margin-top: 8px;
+      padding-top: 8px;
+      border-top: 1px solid var(--border);
+    }
+    .edit-panel.open { display: flex; }
+    .row2 { display: flex; gap: 6px; }
+    .row2 > * { flex: 1; }
+
+    input[type="text"], input[type="date"], textarea {
+      background: var(--surface3);
+      border: 1px solid var(--border2);
+      color: var(--text);
+      padding: 5px 8px;
+      border-radius: var(--r-sm);
+      font-size: 12px;
+      outline: none;
+      width: 100%;
+      font-family: inherit;
+      transition: border-color 0.12s;
+    }
+    input[type="text"]:focus,
+    input[type="date"]:focus,
+    textarea:focus { border-color: var(--accent); }
+    textarea { resize: vertical; min-height: 42px; }
+
+    /* ── Buttons ── */
+    .btn {
+      padding: 5px 10px;
+      border-radius: var(--r-sm);
+      font-size: 12px;
+      cursor: pointer;
+      border: 1px solid transparent;
+      font-family: inherit;
+      transition: all 0.12s;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .btn-primary {
+      background: var(--accent); color: white; border-color: var(--accent);
+    }
+    .btn-primary:hover { background: var(--accent-hover); border-color: var(--accent-hover); }
+    .btn-ghost {
+      background: transparent; color: var(--text-muted); border-color: var(--border2);
+    }
+    .btn-ghost:hover { color: var(--text); background: var(--surface3); }
+    .btn-danger {
+      background: transparent; color: var(--red); border-color: transparent;
+    }
+    .btn-danger:hover { background: var(--red-dim); }
+    .btn-sm { padding: 3px 8px; font-size: 11px; }
+
+    /* ── Close Week ── */
+    .close-week-btn {
+      background: transparent;
+      border: 1px solid var(--border2);
+      color: var(--text-muted);
+      padding: 7px 14px;
+      border-radius: var(--r);
+      cursor: pointer;
+      font-size: 13px;
+      font-family: inherit;
+      transition: all 0.15s;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .close-week-btn:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+      background: var(--accent-dim);
+    }
+
+    /* ── Add Task Form ── */
+    .add-form {
+      display: none;
+      flex-direction: column;
+      gap: 6px;
+      background: var(--surface3);
+      border-radius: var(--r);
+      padding: 10px;
+      margin: 0 10px 10px;
+    }
+    .add-form.open { display: flex; }
+
+    .add-task-btn {
+      width: calc(100% - 20px);
+      margin: 0 10px 10px;
+      background: transparent;
+      color: var(--text-dim);
+      border: 1px dashed var(--border2);
+      border-radius: var(--r-sm);
+      padding: 7px;
+      cursor: pointer;
+      font-size: 12px;
+      text-align: center;
+      font-family: inherit;
+      transition: all 0.12s;
+    }
+    .add-task-btn:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+      background: var(--accent-dim);
+    }
+
+    /* ── Modal ── */
+    .overlay {
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.72);
+      z-index: 200;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .overlay.hidden { display: none; }
+    .modal {
+      background: var(--surface);
+      border: 1px solid var(--border2);
+      border-radius: var(--r-lg);
+      padding: 28px 28px 24px;
+      max-width: 400px; width: 90%;
+      box-shadow: 0 24px 48px rgba(0,0,0,0.5);
+    }
+    .modal-title { font-size: 16px; font-weight: 600; margin-bottom: 10px; }
+    .modal-body { color: var(--text-muted); font-size: 13px; line-height: 1.65; margin-bottom: 22px; }
+    .modal-actions { display: flex; gap: 8px; justify-content: flex-end; }
+
+    /* ── History ── */
+    .history-list { display: flex; flex-direction: column; gap: 14px; }
+    .hw {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--r-lg);
+      overflow: hidden;
+    }
+    .hw-hdr {
+      padding: 14px 18px;
+      border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: space-between;
+      cursor: pointer;
+      user-select: none;
+      transition: background 0.12s;
+    }
+    .hw-hdr:hover { background: var(--surface2); }
+    .hw-title { font-size: 14px; font-weight: 600; }
+    .hw-sub { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+    .hw-right { display: flex; align-items: center; gap: 14px; }
+    .hw-summary { display: flex; gap: 12px; flex-wrap: wrap; }
+    .hw-sum-item { font-size: 12px; color: var(--text-muted); }
+    .hw-sum-item.green { color: var(--green); }
+    .hw-sum-item.red { color: var(--red); }
+    .chevron { color: var(--text-dim); transition: transform 0.18s; font-size: 12px; }
+    .hw.collapsed .hw-body { display: none; }
+    .hw.collapsed .chevron { transform: rotate(-90deg); }
+    .hw-body { padding: 16px 18px; }
+    .hm { margin-bottom: 14px; }
+    .hm:last-child { margin-bottom: 0; }
+    .hm-name {
+      font-size: 11px; font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase; letter-spacing: 0.6px;
+      margin-bottom: 6px;
+    }
+    .ht-row {
+      display: flex; align-items: center; gap: 7px;
+      padding: 5px 8px;
+      border-radius: var(--r-sm);
+      background: var(--surface2);
+      margin-bottom: 4px;
+      font-size: 12px;
+    }
+    .ht-name { flex: 1; color: var(--text-muted); }
+    .ht-name.done { text-decoration: line-through; color: var(--text-dim); }
+    .ht-date { font-size: 11px; color: var(--text-dim); flex-shrink: 0; }
+
+    /* ── Empty State ── */
+    .empty {
+      text-align: center; padding: 48px 20px;
+      color: var(--text-dim); font-size: 13px;
+    }
+    .empty-icon { font-size: 28px; margin-bottom: 10px; }
+
+    /* ── Toast ── */
+    .toast {
+      position: fixed; bottom: 20px; right: 20px;
+      background: var(--surface2);
+      border: 1px solid var(--border2);
+      border-radius: var(--r);
+      padding: 10px 14px;
+      font-size: 13px;
+      z-index: 300;
+      transform: translateY(60px);
+      opacity: 0;
+      transition: all 0.2s ease;
+    }
+    .toast.show { transform: translateY(0); opacity: 1; }
+
+    .hidden { display: none; }
+
+    @media (max-width: 1100px) {
+      .board { grid-template-columns: repeat(2, 1fr); }
+      .perf-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+    @media (max-width: 620px) {
+      .board { grid-template-columns: 1fr; }
+      .hdr { padding: 0 14px; }
+      .main { padding: 14px; }
+      .hdr-title { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ── Header ── -->
+<header class="hdr">
+  <div class="hdr-brand">
+    <div class="hdr-logo">TT</div>
+    <span class="hdr-title">Team Tracker</span>
+  </div>
+  <div class="hdr-right">
+    <nav class="nav">
+      <button class="nav-btn active" data-tab="week" onclick="showTab('week')">This Week</button>
+      <button class="nav-btn" data-tab="history" onclick="showTab('history')">History</button>
+    </nav>
+    <div class="id-wrap">
+      <span class="id-label">You are:</span>
+      <select id="identitySelect" onchange="setIdentity(this.value)">
+        <option value="">Who are you?</option>
+        <option value="Feyi">Feyi</option>
+        <option value="Rebecca">Rebecca</option>
+        <option value="Daniel">Daniel</option>
+        <option value="Francis">Francis</option>
+      </select>
+    </div>
+  </div>
+</header>
+
+<!-- ── Main ── -->
+<main class="main">
+
+  <!-- Week Tab -->
+  <div id="tab-week">
+    <div class="sec-hdr">
+      <div>
+        <div class="sec-title">Current Week</div>
+        <div class="sec-sub" id="weekLabel"></div>
+      </div>
+      <button class="close-week-btn" onclick="promptClose()">
+        <span>✓</span> Close the Week
+      </button>
+    </div>
+    <div class="perf-grid" id="perfPanel"></div>
+    <div class="board" id="board"></div>
+  </div>
+
+  <!-- History Tab -->
+  <div id="tab-history" class="hidden">
+    <div class="sec-hdr">
+      <div>
+        <div class="sec-title">History</div>
+        <div class="sec-sub">All archived weeks, most recent first</div>
+      </div>
+    </div>
+    <div class="history-list" id="historyList"></div>
+  </div>
+
+</main>
+
+<!-- ── Close Week Modal ── -->
+<div class="overlay hidden" id="confirmOverlay">
+  <div class="modal">
+    <div class="modal-title">Close the Week?</div>
+    <div class="modal-body">
+      The current week will be archived with a timestamp and the board will reset for a fresh week. This cannot be undone.
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="dismissModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="doCloseWeek()">Yes, Close the Week</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ── Config ────────────────────────────────────────────────────────────────────
+const MEMBERS   = ['Feyi', 'Rebecca', 'Daniel', 'Francis'];
+const PRIORITIES= ['High', 'Medium', 'Low'];
+const STATUSES  = ['Open', 'Blocked', 'Done'];
+const STORE_KEY = 'teamTracker_v1';
+
+// ── State ─────────────────────────────────────────────────────────────────────
+let state = loadState();
+let me = sessionStorage.getItem('tt_user') || '';
+
+// ── Persistence ───────────────────────────────────────────────────────────────
+function defaultState() {
+  return {
+    schemaVersion: 1,
+    currentWeek: {
+      id: weekId(new Date()),
+      startDate: weekStart(new Date()),
+      tasks: emptyTasks()
+    },
+    history: []
+  };
+}
+
+function emptyTasks() {
+  return Object.fromEntries(MEMBERS.map(m => [m, []]));
+}
+
+function loadState() {
+  try {
+    const raw = localStorage.getItem(STORE_KEY);
+    if (raw) return JSON.parse(raw);
+  } catch {}
+  return defaultState();
+}
+
+function save() {
+  localStorage.setItem(STORE_KEY, JSON.stringify(state));
+}
+
+// ── Utilities ─────────────────────────────────────────────────────────────────
+function uid() {
+  return (typeof crypto !== 'undefined' && crypto.randomUUID)
+    ? crypto.randomUUID()
+    : Math.random().toString(36).slice(2) + Date.now().toString(36);
+}
+
+function weekId(d) {
+  const date = new Date(d);
+  date.setHours(0, 0, 0, 0);
+  date.setDate(date.getDate() + 3 - (date.getDay() + 6) % 7);
+  const w1 = new Date(date.getFullYear(), 0, 4);
+  const n  = 1 + Math.round(((date - w1) / 86400000 - 3 + (w1.getDay() + 6) % 7) / 7);
+  return `${date.getFullYear()}-W${String(n).padStart(2,'0')}`;
+}
+
+function weekStart(d) {
+  const date = new Date(d);
+  const day  = date.getDay();
+  const diff = date.getDate() - day + (day === 0 ? -6 : 1);
+  return new Date(date.setDate(diff)).toISOString().split('T')[0];
+}
+
+function weekEnd(start) {
+  const d = new Date(start);
+  d.setDate(d.getDate() + 6);
+  return d.toISOString().split('T')[0];
+}
+
+function fmtDate(str) {
+  if (!str) return '';
+  return new Date(str + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+}
+
+function fmtRange(start) {
+  return `${fmtDate(start)} – ${fmtDate(weekEnd(start))}`;
+}
+
+function esc(s) {
+  return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function toast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 2400);
+}
+
+// ── Identity ──────────────────────────────────────────────────────────────────
+function setIdentity(val) {
+  me = val;
+  sessionStorage.setItem('tt_user', val);
+  render();
+}
+
+// ── Tabs ─────────────────────────────────────────────────────────────────────
+function showTab(tab) {
+  document.getElementById('tab-week').classList.toggle('hidden', tab !== 'week');
+  document.getElementById('tab-history').classList.toggle('hidden', tab !== 'history');
+  document.querySelectorAll('.nav-btn').forEach(b => {
+    b.classList.toggle('active', b.dataset.tab === tab);
+  });
+  if (tab === 'history') renderHistory();
+}
+
+// ── Tasks ─────────────────────────────────────────────────────────────────────
+function addTask(member, formEl) {
+  const name = formEl.querySelector('.f-name').value.trim();
+  if (!name) { formEl.querySelector('.f-name').focus(); return; }
+
+  state.currentWeek.tasks[member].push({
+    id:        uid(),
+    name,
+    priority:  formEl.querySelector('.f-priority').value,
+    status:    formEl.querySelector('.f-status').value,
+    dueDate:   formEl.querySelector('.f-due').value,
+    notes:     formEl.querySelector('.f-notes').value.trim(),
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString()
+  });
+  save();
+
+  // Reset form fields
+  formEl.querySelector('.f-name').value  = '';
+  formEl.querySelector('.f-notes').value = '';
+  formEl.querySelector('.f-due').value   = '';
+  formEl.classList.remove('open');
+
+  render();
+  toast('Task added');
+}
+
+function updateField(member, taskId, field, value) {
+  const t = state.currentWeek.tasks[member].find(t => t.id === taskId);
+  if (!t) return;
+  t[field]    = value;
+  t.updatedAt = new Date().toISOString();
+  save();
+  // Re-render just the card's visual state without closing the edit panel
+  const card = document.querySelector(`[data-id="${taskId}"]`);
+  if (card) {
+    const statusCls = value === 'Blocked' ? 'blocked' : value === 'Done' ? 'done' : '';
+    card.className = `task-card ${statusCls}`;
+    const nb = card.querySelector('.name-badge');
+    if (nb) nb.className = `b-${field === 'status' ? value.toLowerCase() : t.status.toLowerCase()} badge`;
+    if (field === 'name') {
+      const tn = card.querySelector('.task-name');
+      if (tn) tn.textContent = value;
+    }
+  }
+  renderPerfPanel();
+}
+
+function deleteTask(member, taskId) {
+  state.currentWeek.tasks[member] = state.currentWeek.tasks[member].filter(t => t.id !== taskId);
+  save();
+  render();
+  toast('Task deleted');
+}
+
+// ── Close Week ────────────────────────────────────────────────────────────────
+function promptClose() {
+  document.getElementById('confirmOverlay').classList.remove('hidden');
+}
+function dismissModal() {
+  document.getElementById('confirmOverlay').classList.add('hidden');
+}
+function doCloseWeek() {
+  const wk = state.currentWeek;
+  const summary = Object.fromEntries(MEMBERS.map(m => {
+    const tasks = wk.tasks[m];
+    return [m, {
+      total:   tasks.length,
+      done:    tasks.filter(t => t.status === 'Done').length,
+      blocked: tasks.filter(t => t.status === 'Blocked').length
+    }];
+  }));
+
+  state.history.unshift({
+    id:        wk.id,
+    startDate: wk.startDate,
+    closedAt:  new Date().toISOString(),
+    tasks:     JSON.parse(JSON.stringify(wk.tasks)),
+    summary
+  });
+
+  state.currentWeek = {
+    id:        weekId(new Date()),
+    startDate: weekStart(new Date()),
+    tasks:     emptyTasks()
+  };
+
+  save();
+  dismissModal();
+  render();
+  toast('Week archived successfully');
+}
+
+// ── Render: Perf Panel ────────────────────────────────────────────────────────
+function renderPerfPanel() {
+  const panel = document.getElementById('perfPanel');
+  panel.innerHTML = MEMBERS.map(m => {
+    const tasks   = state.currentWeek.tasks[m];
+    const total   = tasks.length;
+    const done    = tasks.filter(t => t.status === 'Done').length;
+    const blocked = tasks.filter(t => t.status === 'Blocked').length;
+    const allDone = total > 0 && done === total;
+    const hasBl   = blocked > 0;
+    const cls     = allDone ? 'all-done' : hasBl ? 'has-blocked' : '';
+    const sub     = total === 0 ? 'No tasks yet'
+                  : allDone    ? 'All complete!'
+                  : hasBl      ? `${blocked} blocked`
+                  : `${total - done - blocked} open`;
+    const dots = tasks.map(t => {
+      const dc = t.status === 'Done' ? 'done' : t.status === 'Blocked' ? 'blocked' : 'open';
+      return `<div class="dot ${dc}" title="${esc(t.name)}: ${t.status}"></div>`;
+    }).join('');
+    return `
+      <div class="perf-card ${cls}">
+        <div class="perf-name">${m}</div>
+        <div class="perf-stat">${done}/${total} Done</div>
+        <div class="perf-sub">${sub}</div>
+        ${total > 0 ? `<div class="perf-dots">${dots}</div>` : ''}
+      </div>`;
+  }).join('');
+}
+
+// ── Render: Board ─────────────────────────────────────────────────────────────
+function renderBoard() {
+  const board = document.getElementById('board');
+  board.innerHTML = '';
+
+  MEMBERS.forEach(member => {
+    const isMe = member === me;
+    const tasks = state.currentWeek.tasks[member];
+
+    const col = document.createElement('div');
+    col.className = `col${isMe ? ' is-me' : ''}`;
+
+    // Header
+    col.innerHTML = `
+      <div class="col-hdr">
+        <div class="col-name">${member}</div>
+        <div class="col-meta">
+          ${isMe ? '<span class="you-pill">You</span>' : ''}
+          <span class="count-pill">${tasks.length}</span>
+        </div>
+      </div>`;
+
+    // Tasks list
+    const taskArea = document.createElement('div');
+    taskArea.className = 'col-tasks';
+
+    if (tasks.length === 0) {
+      taskArea.innerHTML = `<div class="col-empty">${isMe ? 'Add your first task →' : 'No tasks yet'}</div>`;
+    } else {
+      tasks.forEach(task => taskArea.appendChild(buildTaskCard(member, task, isMe)));
+    }
+    col.appendChild(taskArea);
+
+    // Add form + button (own column only)
+    if (isMe) {
+      const formId = `add-${member}`;
+      const form = document.createElement('div');
+      form.className = 'add-form';
+      form.id = formId;
+      form.innerHTML = `
+        <input class="f-name" type="text" placeholder="Task name…" />
+        <div class="row2">
+          <select class="f-priority">
+            ${PRIORITIES.map(p => `<option>${p}</option>`).join('')}
+          </select>
+          <select class="f-status">
+            ${STATUSES.map(s => `<option>${s}</option>`).join('')}
+          </select>
+        </div>
+        <input class="f-due" type="date" />
+        <textarea class="f-notes" placeholder="Notes (optional)…" rows="2"></textarea>
+        <div class="row2" style="justify-content:flex-end;gap:6px;">
+          <button class="btn btn-ghost btn-sm" onclick="cancelAdd('${member}')">Cancel</button>
+          <button class="btn btn-primary btn-sm" onclick="addTask('${member}', document.getElementById('${formId}'))">Add</button>
+        </div>`;
+      col.appendChild(form);
+
+      const addBtn = document.createElement('button');
+      addBtn.className = 'add-task-btn';
+      addBtn.textContent = '+ Add Task';
+      addBtn.onclick = () => toggleAdd(member);
+      col.appendChild(addBtn);
+    }
+
+    board.appendChild(col);
+  });
+}
+
+function buildTaskCard(member, task, isMe) {
+  const card = document.createElement('div');
+  const statusCls = task.status === 'Blocked' ? 'blocked' : task.status === 'Done' ? 'done' : '';
+  card.className = `task-card ${statusCls}`.trim();
+  card.dataset.id = task.id;
+
+  card.innerHTML = `
+    <div class="task-top">
+      <div class="task-name">${esc(task.name)}</div>
+    </div>
+    <div class="task-badges">
+      <span class="badge b-${task.priority.toLowerCase()}">${task.priority}</span>
+      <span class="badge name-badge b-${task.status.toLowerCase()}">${task.status}</span>
+      ${task.dueDate ? `<span class="task-due">Due ${fmtDate(task.dueDate)}</span>` : ''}
+    </div>
+    ${task.notes ? `<div class="task-note">${esc(task.notes)}</div>` : ''}
+    ${isMe ? buildEditSection(member, task) : ''}`;
+
+  return card;
+}
+
+function buildEditSection(member, task) {
+  const eid = `ep-${task.id}`;
+  return `
+    <div class="task-btns">
+      <button class="btn btn-ghost btn-sm" onclick="toggleEdit('${eid}')">Edit</button>
+      <button class="btn btn-danger btn-sm" onclick="deleteTask('${member}','${task.id}')">Delete</button>
+    </div>
+    <div class="edit-panel" id="${eid}">
+      <input type="text" value="${esc(task.name)}" placeholder="Task name"
+        onblur="updateField('${member}','${task.id}','name',this.value)" />
+      <div class="row2">
+        <select onchange="updateField('${member}','${task.id}','priority',this.value)">
+          ${PRIORITIES.map(p => `<option${p===task.priority?' selected':''}>${p}</option>`).join('')}
+        </select>
+        <select onchange="updateField('${member}','${task.id}','status',this.value)">
+          ${STATUSES.map(s => `<option${s===task.status?' selected':''}>${s}</option>`).join('')}
+        </select>
+      </div>
+      <input type="date" value="${esc(task.dueDate||'')}"
+        onchange="updateField('${member}','${task.id}','dueDate',this.value)" />
+      <textarea placeholder="Notes…"
+        onblur="updateField('${member}','${task.id}','notes',this.value)">${esc(task.notes||'')}</textarea>
+    </div>`;
+}
+
+function toggleEdit(panelId) {
+  document.getElementById(panelId)?.classList.toggle('open');
+}
+
+function toggleAdd(member) {
+  const form = document.getElementById(`add-${member}`);
+  if (!form) return;
+  form.classList.toggle('open');
+  if (form.classList.contains('open')) form.querySelector('.f-name').focus();
+}
+
+function cancelAdd(member) {
+  document.getElementById(`add-${member}`)?.classList.remove('open');
+}
+
+// ── Render: History ───────────────────────────────────────────────────────────
+function renderHistory() {
+  const list = document.getElementById('historyList');
+  list.innerHTML = '';
+
+  if (!state.history.length) {
+    list.innerHTML = `
+      <div class="empty">
+        <div class="empty-icon">📋</div>
+        No history yet. Close the week to archive it here.
+      </div>`;
+    return;
+  }
+
+  state.history.forEach(wk => {
+    const closed = new Date(wk.closedAt).toLocaleDateString('en-US', {
+      month: 'short', day: 'numeric', year: 'numeric',
+      hour: '2-digit', minute: '2-digit'
+    });
+
+    const summaryHtml = MEMBERS.map(m => {
+      const s = wk.summary[m] || { done:0, total:0, blocked:0 };
+      const cls = s.total > 0 && s.done === s.total ? 'green'
+                : s.blocked > 0 ? 'red' : '';
+      return `<span class="hw-sum-item ${cls}">${m}: ${s.done}/${s.total}</span>`;
+    }).join('');
+
+    const bodyHtml = MEMBERS.map(m => {
+      const tasks = (wk.tasks[m] || []);
+      if (!tasks.length) return '';
+      const rows = tasks.map(t => `
+        <div class="ht-row">
+          <span class="badge b-${t.status.toLowerCase()}">${t.status}</span>
+          <span class="ht-name${t.status==='Done'?' done':''}">${esc(t.name)}</span>
+          <span class="badge b-${t.priority.toLowerCase()}">${t.priority}</span>
+          ${t.dueDate ? `<span class="ht-date">${fmtDate(t.dueDate)}</span>` : ''}
+        </div>`).join('');
+      return `<div class="hm"><div class="hm-name">${m}</div>${rows}</div>`;
+    }).join('');
+
+    const hw = document.createElement('div');
+    hw.className = 'hw';
+    hw.innerHTML = `
+      <div class="hw-hdr" onclick="this.parentElement.classList.toggle('collapsed')">
+        <div>
+          <div class="hw-title">${wk.id} &mdash; ${fmtRange(wk.startDate)}</div>
+          <div class="hw-sub">Closed ${closed}</div>
+        </div>
+        <div class="hw-right">
+          <div class="hw-summary">${summaryHtml}</div>
+          <span class="chevron">▾</span>
+        </div>
+      </div>
+      <div class="hw-body">
+        ${bodyHtml || '<div style="color:var(--text-dim);font-size:12px;">No tasks were recorded this week.</div>'}
+      </div>`;
+    list.appendChild(hw);
+  });
+}
+
+// ── Render ────────────────────────────────────────────────────────────────────
+function render() {
+  const wk = state.currentWeek;
+  document.getElementById('weekLabel').textContent =
+    `${wk.id} · ${fmtRange(wk.startDate)}`;
+  renderPerfPanel();
+  renderBoard();
+}
+
+// ── Init ──────────────────────────────────────────────────────────────────────
+(function init() {
+  const sel = document.getElementById('identitySelect');
+  if (me && MEMBERS.includes(me)) sel.value = me;
+
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') {
+      dismissModal();
+      MEMBERS.forEach(m => cancelAdd(m));
+      document.querySelectorAll('.edit-panel.open').forEach(p => p.classList.remove('open'));
+    }
+    if (e.key === 'Enter' && document.getElementById('confirmOverlay').classList.contains('hidden') === false) {
+      if (document.activeElement.tagName !== 'TEXTAREA') doCloseWeek();
+    }
+  });
+
+  // Allow Enter key in add-form name field to submit
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Enter' && e.target.classList.contains('f-name')) {
+      e.preventDefault();
+      const form = e.target.closest('.add-form');
+      if (form) addTask(form.id.replace('add-',''), form);
+    }
+  });
+
+  render();
+})();
+</script>
+</body>
+</html>
