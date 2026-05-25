@@ -986,16 +986,16 @@ function render() {
     }
   });
 
-  STATE_REF.on('value', snapshot => {
-    const data = snapshot.val();
-    if (data) {
-      state = data;
-    } else {
-      state = defaultState();
-      STATE_REF.set(state);
-    }
-    render();
-  });
+   STATE_REF.on('value', snapshot => {
+      const data = snapshot.val();
+      if (data && data.currentWeek && data.currentWeek.tasks) {
+        state = data;
+      } else {
+        state = defaultState();
+        STATE_REF.set(state);
+      }
+      render();
+    });
 })();
 </script>
 </body>
